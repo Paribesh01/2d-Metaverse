@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "prettier": "^3.2.5",
-    "turbo": "^2.2.3",
+    "turbo": "file:",
     "typescript": "^5.4.5"
   },
   "engines": {
@@ -19,5 +19,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "unique-names-generator": "^4.7.1"
+  }
 }
