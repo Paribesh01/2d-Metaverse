@@ -13,7 +13,7 @@ interface Game {
     roomid: string;
     players: string[];
     message: { [email: string]: { x: number, y: number } }; // New field for tracking positions
-    chat: { email: string, message: string }[]
+    chat: { email: string, chat: string }[]
     admin: string;
 }
 
@@ -81,7 +81,7 @@ export class GameManager {
                         return { email: playerEmail, position };
                     });
 
-                this.notifyUser(email, { status: SET_UP, email, roomid, otherPlayers: otherPlayersData });
+                this.notifyUser(email, { status: SET_UP, email, chats: existingGame.chat, roomid, otherPlayers: otherPlayersData });
                 this.broadcastToRoom(roomid, { status: 'roomJoined', roomid, email, position: { x: 25, y: 25 } });
             }
         } else {
@@ -169,7 +169,7 @@ export class GameManager {
         const game = this.games.find(g => g.roomid === roomid);
         if (game) {
             if (user && user.ws.readyState === WebSocket.OPEN) {
-                game.chat.push({ email, message: chat });
+                game.chat.push({ email, chat });
                 this.broadcastToRoom(roomid, { status: CHAT, roomid, email, chat });
                 console.log(`User ID: ${email} sent message to room ID: ${roomid}`);
             } else {

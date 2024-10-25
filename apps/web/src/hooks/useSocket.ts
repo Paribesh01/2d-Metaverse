@@ -53,6 +53,7 @@ export const useSocket = (url: string) => {
             } else if (data.status === SET_UP) {
                 setUserEmail(data.email)
                 setRoomId(data.roomid)
+                setMessages(data.chats ?? [])
                 EventBus.emit('message', data);
             } else {
                 EventBus.emit('message', data);
