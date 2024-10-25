@@ -3,9 +3,8 @@ import { EventBus } from '@/game/EventBus';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-let socketInstance: WebSocket | null = null; // Singleton instance
 
-export const useSocket = (url = 'ws://localhost:8081') => {
+export const useSocket = (url: string) => {
     const router = useRouter();
 
     interface Message {
@@ -28,39 +27,40 @@ export const useSocket = (url = 'ws://localhost:8081') => {
     }
 
     const [messages, setMessages] = useState<Message[]>([]);
+    const [socket, setSocket] = useState<WebSocket | null>(null);
     const [roomid, setRoomId] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
     const [rooms, setRooms] = useState<Game[]>([]);
 
     useEffect(() => {
-        if (!socketInstance) {
-            // Create a new WebSocket instance
-            socketInstance = new WebSocket(url);
+        console.log("url")
+        console.log(url)
+        // Create a new WebSocket instance
+        const ws = new WebSocket(url);
+        setSocket(ws)
 
-            socketInstance.onopen = () => {
-                console.log('WebSocket connection established');
-            };
+        ws.onopen = () => {
+            console.log('WebSocket connection established');
+        };
 
-            socketInstance.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                console.log(data);
-                EventBus.emit('message', data);
-                handleServerMessage(data);
-            };
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log(data);
+            EventBus.emit('message', data);
+            // handleServerMessage(data);
+        };
 
-            socketInstance.onclose = () => {
-                console.log('WebSocket connection closed');
-            };
-        }
+        ws.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+
 
         // Event listener for player moves
-        EventBus.on('player-move', (message: any) => {
-            socketInstance?.send(JSON.stringify({ action: 'sendMessage', position: message.position, roomid: message.roomid }));
-        });
+
 
         // Cleanup function
         return () => {
-            // Optional: socketInstance.close() if you want to close the socket when component unmounts
+            // Optional: socket.close() if you want to close the socket when component unmounts
         };
     }, [url]);
 
@@ -115,38 +115,31 @@ export const useSocket = (url = 'ws://localhost:8081') => {
         }
     };
 
-    const createRoom = () => {
-        if (socketInstance) {
-            socketInstance.send(JSON.stringify({ action: 'createRoom' }));
-        }
-    };
+    // const createRoom = () => {
+    //     if (socket) {
+    //         socket.send(JSON.stringify({ action: 'createRoom' }));
+    //     }
+    // };
 
-    const joinRoom = (roomid: string) => {
-        if (socketInstance) {
-            socketInstance.send(JSON.stringify({ action: 'joinRoom', roomid }));
-        }
-    };
+    // const joinRoom = (roomid: string) => {
+    //     if (socket) {
+    //         socket.send(JSON.stringify({ action: 'joinRoom', roomid }));
+    //     }
+    // };
 
-    const sendMessage = (message: string) => {
-        if (socketInstance) {
-            socketInstance.send(JSON.stringify({ action: 'sendMessage', roomid, message }));
-        }
-    };
+    // const sendMessage = (message: string) => {
+    //     if (socket) {
+    //         socket.send(JSON.stringify({ action: 'sendMessage', roomid, message }));
+    //     }
+    // };
 
-    const exitRoom = () => {
-        if (socketInstance) {
-            socketInstance.send(JSON.stringify({ action: 'exitRoom', roomid, userId }));
-        }
-    };
+    // const exitRoom = () => {
+    //     if (socket) {
+    //         socket.send(JSON.stringify({ action: 'exitRoom', roomid, userId }));
+    //     }
+    // };
 
     return {
-        messages,
-        createRoom,
-        joinRoom,
-        sendMessage,
-        exitRoom,
-        userId,
-        roomid,
-        rooms,
+        socket,
     };
 };

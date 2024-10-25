@@ -29,7 +29,7 @@ export async function createRoom() {
     // Check if user exists
     if (!user) {
         console.log("User not found");
-        return { message: "User not found", status: 404 };
+        return { success: false, message: "User not found", status: 404 };
     }
 
     // Create room
@@ -43,7 +43,7 @@ export async function createRoom() {
         },
     });
 
-    return { message: "Room created successfully", room };
+    return { sucess: true, message: "Room created successfully", room };
 }
 
 export async function GetRooms() {
@@ -87,7 +87,7 @@ export async function JoinRoom(id: string) {
                 }
             }
         })
-        return { message: "Joined successfully", rooms }
+        return { success: true, message: "Joined successfully", rooms }
     } catch (e) {
         console.log(e)
     }

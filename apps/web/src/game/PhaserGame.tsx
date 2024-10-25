@@ -14,7 +14,6 @@ interface IProps {
 
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame({ currentActiveScene }, ref) {
     const game = useRef<Phaser.Game | null>(null);
-    const { sendMessage } = useSocket();
 
     useLayoutEffect(() => {
         if (!game.current) {
@@ -40,19 +39,19 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
             setRef(ref, { game: game.current, scene: scene_instance });
         };
 
-        const handlePlayerMove = (data: any) => {
-            console.log("player-move", data);
-            sendMessage(data);
-        };
+        // const handlePlayerMove = (data: any) => {
+        //     console.log("player-move", data);
+        //     sendMessage(data);
+        // };
 
         EventBus.on('current-scene-ready', handleSceneReady);
-        EventBus.on('player-move', handlePlayerMove);
+        // EventBus.on('player-move', handlePlayerMove);
 
         return () => {
             EventBus.removeListener('current-scene-ready', handleSceneReady);
-            EventBus.removeListener('player-move', handlePlayerMove);
+            // EventBus.removeListener('player-move', handlePlayerMove);
         };
-    }, [currentActiveScene, ref, sendMessage]);
+    }, [currentActiveScene, ref]);
 
     const setRef = (ref: any, value: IRefPhaserGame) => {
         if (typeof ref === 'function') {
