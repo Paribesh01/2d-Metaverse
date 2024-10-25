@@ -6,13 +6,14 @@ import { Game as GameScene } from '@/game/scenes/Game';
 import { useSocket } from '@/hooks/useSocket';
 import { useSession } from 'next-auth/react';
 import { Session } from 'next-auth';
+import ChatBox from '@/components/ChatBox';
 
 const Game: React.FC = ({ params }: any) => {
     const session: any = useSession()
     console.log(session)
     const url = `ws://localhost:8081?email=${session?.data?.user.email}&roomId=${params.id}`
     console.log(url)
-    const { socket } = useSocket(url);
+    const { socket, messages, userEmail, sendMessage } = useSocket(url);
     const phaserRef = useRef<IRefPhaserGame | null>(null);
 
     // EventBus.emit("message", { status: "Set-up", email: session?.data?.user.email, roomId: params.id })
@@ -28,6 +29,7 @@ const Game: React.FC = ({ params }: any) => {
     return (
         <div id="app">
             <PhaserGame ref={phaserRef} />
+            <ChatBox messages={messages} handleSendMessage={sendMessage} userid={userEmail} />
         </div>
     );
 };

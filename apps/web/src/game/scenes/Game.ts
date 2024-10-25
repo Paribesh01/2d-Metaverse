@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
+import { CHAT, PLAYER_MOVE, ROOMJOINED, ROOM_EXITED, SET_UP } from '@/const';
 
 export class Game extends Scene {
     public playerId: string | undefined;
@@ -126,7 +127,7 @@ export class Game extends Scene {
         console.log("Received message in game:", message);
 
         switch (message.status) {
-            case "Set-up":
+            case SET_UP:
                 if (this.RoomId && this.playerId) return;
                 this.RoomId = message.roomid;
                 this.playerId = message.email;
@@ -136,26 +137,21 @@ export class Game extends Scene {
                 }
                 break;
 
-            case "roomCreated":
-                this.RoomId = message.roomid;
-                break;
 
-            case "playerMove":
+            case PLAYER_MOVE:
                 this.handlePlayersMovement(message);
                 break;
-            case "roomExited":
+            case ROOM_EXITED:
                 console.log("room exited")
                 this.handleRoomExited(message);
                 break;
-            case "roomJoined":
+            case ROOMJOINED:
                 if (message.email && message.email !== this.playerId) {
                     this.addPlayerToRoom(message.email, message.position);
                 }
                 break;
-
-            case "messageSent":
-                this.RoomId = message.roomid;
-                break;
+            default:
+                console.log("Unknown action");
         }
     }
     handleOtherPlayersData(otherPlayersData: { email: string; position: { x: number, y: number } }[]) {

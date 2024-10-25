@@ -1,18 +1,19 @@
 import WebSocket from 'ws';
-import { v4 as uuidv4 } from 'uuid';
-import { uniqueNamesGenerator, Config, adjectives, colors, animals } from 'unique-names-generator';
 import { db } from './db';
+import { CHAT, EXIT_ROOM, PLAYER_MOVE, SET_UP } from './const';
 
 interface Message {
     action: string,
-    position: { x: number, y: number },
-    roomid: string
+    position?: { x: number, y: number },
+    roomid: string,
+    chat?: string
 }
 
 interface Game {
     roomid: string;
     players: string[];
     message: { [email: string]: { x: number, y: number } }; // New field for tracking positions
+    chat: { email: string, message: string }[]
     admin: string;
 }
 
@@ -23,27 +24,9 @@ export class GameManager {
     constructor() {
         this.games = [];
         this.users = [];
-        // this.fetchRooms()
     }
 
-    // fetchRooms = async () => {
-    //     const rooms = await db.room.findMany({
-    //         select: {
-    //             id: true,
-    //             name: true,
-    //             authorId: true,
-    //             players: {
-    //                 select: {
-    //                     id: true,
-    //                     email: true
-    //                 }
-    //             }
-    //         }
-    //     })
 
-
-
-    // }
 
 
     async fetchRooms(roomId: string) {
@@ -98,14 +81,14 @@ export class GameManager {
                         return { email: playerEmail, position };
                     });
 
-                this.notifyUser(email, { status: "Set-up", email, roomid, otherPlayers: otherPlayersData });
+                this.notifyUser(email, { status: SET_UP, email, roomid, otherPlayers: otherPlayersData });
                 this.broadcastToRoom(roomid, { status: 'roomJoined', roomid, email, position: { x: 25, y: 25 } });
             }
         } else {
             // Create a new game if no existing game is found, with an empty positions object
-            this.games.push({ roomid, players: [email], message: { [email]: { x: 25, y: 25 } }, admin: room.author.email });
+            this.games.push({ roomid, players: [email], message: { [email]: { x: 25, y: 25 } }, chat: [], admin: room.author.email });
             this.users.push({ ws, email });
-            this.notifyUser(email, { status: "Set-up", email, roomid, otherPlayers: [] });
+            this.notifyUser(email, { status: SET_UP, email, roomid, otherPlayers: [] });
         }
 
         this.handleMessages(email, ws);
@@ -140,21 +123,24 @@ export class GameManager {
     handleMessages(email: string, ws: WebSocket) {
         console.log("indide handel message")
         ws.on('message', (message: string) => {
-            const parsedMessage: Message = JSON.parse(message);
+            const parsedMessage = JSON.parse(message);
             const { action, roomid } = parsedMessage;
             console.log("message from the server")
             console.log(parsedMessage)
 
             switch (action) {
-                case 'sendMessage':
-                    this.sendMessage(email, roomid, parsedMessage.position);
-                    break;
+                // case 'sendMessage':
+                //     this.sendMessage(email, roomid, parsedMessage.position);
+                //     break;
 
-                case "playerMove":
+                case PLAYER_MOVE:
                     this.handelPlayerMove(email, roomid, parsedMessage.position);
                     break;
-                case 'exitRoom':
+                case EXIT_ROOM:
                     this.exitRoom(email, roomid);
+                    break;
+                case CHAT:
+                    this.handleChat(email, roomid, parsedMessage.chat);
                     break;
                 default:
                     console.log('Unknown action:', action);
@@ -178,6 +164,21 @@ export class GameManager {
     //     this.notifyUser(email, { status: 'roomCreated', roomid });
     // }
 
+    handleChat(email: string, roomid: string, chat: string) {
+        const user = this.users.find(u => u.email === email);
+        const game = this.games.find(g => g.roomid === roomid);
+        if (game) {
+            if (user && user.ws.readyState === WebSocket.OPEN) {
+                game.chat.push({ email, message: chat });
+                this.broadcastToRoom(roomid, { status: CHAT, roomid, email, chat });
+                console.log(`User ID: ${email} sent message to room ID: ${roomid}`);
+            } else {
+                console.log(`WebSocket for User ID ${email} not found or not open`);
+            }
+        } else {
+            this.notifyUser(email, { status: 'roomNotFound', roomid });
+        }
+    }
 
     handelPlayerMove(email: string, roomid: string, position: { x: number, y: number }) {
         const user = this.users.find(u => u.email === email);
@@ -257,6 +258,8 @@ export class GameManager {
         const user = this.users.find(u => u.email === email);
 
         if (user && user.ws.readyState === WebSocket.OPEN) {
+            console.log(message)
+            console.log("MEssage Sent")
             user.ws.send(JSON.stringify(message));
         } else {
             console.log(`WebSocket for User ID ${email} not found or not open`);
