@@ -114,8 +114,12 @@ export class Game extends Scene {
     addPlayer() {
         this.player = this.physics.add.sprite(25, 25, 'dude').setScale(0.3);
         this.player.setCollideWorldBounds(true);
+
+
         this.lastX = this.player.x;
         this.lastY = this.player.y;
+
+
     }
 
     handleIncomingMessage(message: any) {
@@ -139,7 +143,10 @@ export class Game extends Scene {
             case "playerMove":
                 this.handlePlayersMovement(message);
                 break;
-
+            case "roomExited":
+                console.log("room exited")
+                this.handleRoomExited(message);
+                break;
             case "roomJoined":
                 if (message.email && message.email !== this.playerId) {
                     this.addPlayerToRoom(message.email, message.position);
@@ -165,6 +172,18 @@ export class Game extends Scene {
                 }
             }
         });
+    }
+
+    handleRoomExited(message: any) {
+        const { email, roomid } = message;
+        const player = this.players.find(p => p.email === email);
+
+        if (player) {
+            player.soul.destroy();
+            this.players = this.players.filter(p => p.email !== email);
+            console.log(`Player ${email} exited room ${roomid}`);
+
+        }
     }
 
     handlePlayersMovement(message: any) {

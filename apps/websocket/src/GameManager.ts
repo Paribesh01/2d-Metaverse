@@ -118,21 +118,20 @@ export class GameManager {
         if (user) {
             const { email } = user;
 
-            // Remove user from users array
             this.users = this.users.filter(u => u.ws !== ws);
             console.log(`User ${email} disconnected and removed`);
 
-            // Remove user from all games
             this.games = this.games.filter(game => {
-                // Filter out the user from the game's players list
-                game.players = game.players.filter(player => player !== email);
 
-                // Check if the game has any players left
+                game.players = game.players.filter(player => player !== email);
+                const roomid = game.roomid
+                this.broadcastToRoom(roomid, { status: 'roomExited', roomid, email });
+                console.log("room user removed")
                 if (game.players.length === 0) {
                     console.log(`Game in room ${game.roomid} has no players left and is removed.`);
-                    return false; // Remove the game from games array
+                    return false;
                 }
-                return true; // Keep the game in games array
+                return true;
             });
         }
     }

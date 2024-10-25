@@ -15,6 +15,7 @@ const config: Types.Core.GameConfig = {
             debug: false
         }
     },
+
     scene: [
         MainGame
     ]
